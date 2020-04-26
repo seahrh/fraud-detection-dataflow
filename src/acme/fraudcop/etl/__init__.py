@@ -1,6 +1,7 @@
 import math
 from typing import NamedTuple, Dict, Any, Iterable
 import apache_beam as beam
+from acme.fraudcop.experiments import hash_to_float
 
 
 class Imput(beam.PTransform):
@@ -35,6 +36,28 @@ class Imput(beam.PTransform):
 
     def expand(self, input_or_inputs):
         return input_or_inputs | beam.Map(Imput.transform, rules=self.rules)
+
+
+class AssignExperimentGroup(beam.PTransform):
+    def __init__(self, input_key: str, output_key: str = "experiment_group_hash"):
+        super().__init__()
+        self.input_key = input_key
+        self.output_key = output_key
+
+    @staticmethod
+    def transform(
+        element: Dict[str, Any], input_key: str, output_key: str
+    ) -> Dict[str, Any]:
+        res = dict(element)
+        res[output_key] = hash_to_float(res[input_key])
+        return res
+
+    def expand(self, input_or_inputs):
+        return input_or_inputs | beam.Map(
+            AssignExperimentGroup.transform,
+            input_key=self.input_key,
+            output_key=self.output_key,
+        )
 
 
 class StandardDeviationCombineFn(beam.CombineFn):
