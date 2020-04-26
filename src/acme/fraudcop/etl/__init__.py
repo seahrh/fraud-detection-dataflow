@@ -29,7 +29,18 @@ def imput(element: Dict[str, Any], rules: Iterable[Rule]) -> Dict[str, Any]:
     return res
 
 
-class StandardDeviationCombiner(beam.CombineFn):
+class StandardDeviationCombineFn(beam.CombineFn):
+    """
+    The StandardDeviationCombineFn class is an accumulator that computes the sample standard deviation
+    of a stream of real numbers. It provides an example of a mutable data type and a streaming
+    algorithm.
+
+    This implementation uses a one-pass algorithm that is less susceptible to floating-point roundoff error
+    than the more straightforward implementation based on saving the sum of the squares of the numbers.
+
+    Based on https://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/Accumulator.java.html
+    """
+
     def to_runner_api_parameter(self, unused_context):
         raise NotImplementedError(str(self))
 
@@ -40,7 +51,7 @@ class StandardDeviationCombiner(beam.CombineFn):
         (sum_of_deviations, _mean, count) = mutable_accumulator
         count = count + 1
         # running mean
-        _mean = _mean * (count - 1) / count + (element / count)
+        _mean = (_mean * (count - 1) + element) / count
         sum_of_deviations = sum_of_deviations + (element - _mean) ** 2
         return sum_of_deviations, _mean, count
 
