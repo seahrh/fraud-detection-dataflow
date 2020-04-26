@@ -1,4 +1,6 @@
+import math
 from typing import NamedTuple, Dict, Any, Iterable
+import apache_beam as beam
 
 
 class Rule(NamedTuple):
@@ -25,3 +27,37 @@ def imput(element: Dict[str, Any], rules: Iterable[Rule]) -> Dict[str, Any]:
         if rule.apply_on_negative_numbers and v < 0:
             res[rule.key] = rule.imputed_value
     return res
+
+
+class StandardDeviationCombiner(beam.CombineFn):
+    def to_runner_api_parameter(self, unused_context):
+        raise NotImplementedError(str(self))
+
+    def create_accumulator(self):
+        return 0.0, 0.0, 0  # sum of deviations, mean, count
+
+    def add_input(self, mutable_accumulator, element, *args, **kwargs):
+        (sum_of_deviations, _mean, count) = mutable_accumulator
+        count = count + 1
+        # running mean
+        _mean = _mean * (count - 1) / count + (element / count)
+        sum_of_deviations = sum_of_deviations + (element - _mean) ** 2
+        return sum_of_deviations, _mean, count
+
+    def merge_accumulators(self, accumulators, **kwargs):
+        sums_of_deviations, means, counts = zip(*accumulators)
+        # drop the mean values because they are no longer needed
+        return sum(sums_of_deviations), sum(counts)
+
+    def extract_output(self, accumulator, **kwargs):
+        (sum_of_deviations, count) = accumulator
+        if count <= 1:
+            std = float("NaN")
+        else:
+            variance = sum_of_deviations / (count - 1)
+            # -ve value could happen due to rounding
+            std = math.sqrt(variance) if variance > 0 else 0
+        return {
+            "std": std,
+            "count": count,
+        }
