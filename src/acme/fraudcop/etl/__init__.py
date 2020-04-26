@@ -4,40 +4,6 @@ import apache_beam as beam
 from acme.fraudcop.experiments import hash_to_float
 
 
-class Imput(beam.PTransform):
-    class Rule(NamedTuple):
-        key: str
-        imputed_value: Any
-        apply_on_nulls: bool = True
-        apply_on_empty_strings: bool = False
-        apply_on_zeroes: bool = False
-        apply_on_negative_numbers: bool = False
-
-    @staticmethod
-    def transform(element: Dict[str, Any], rules: Iterable[Rule]) -> Dict[str, Any]:
-        res = dict(element)
-        for rule in rules:
-            if rule.key not in res:
-                continue
-            v = res[rule.key]
-            if rule.apply_on_nulls and v is None:
-                res[rule.key] = rule.imputed_value
-            if rule.apply_on_empty_strings and v == "":
-                res[rule.key] = rule.imputed_value
-            if rule.apply_on_zeroes and v == 0:
-                res[rule.key] = rule.imputed_value
-            if rule.apply_on_negative_numbers and v < 0:
-                res[rule.key] = rule.imputed_value
-        return res
-
-    def __init__(self, rules: Iterable[Rule]):
-        super().__init__()
-        self.rules = rules
-
-    def expand(self, input_or_inputs):
-        return input_or_inputs | beam.Map(Imput.transform, rules=self.rules)
-
-
 class AssignExperimentGroup(beam.PTransform):
     def __init__(self, input_key: str, output_key: str = "experiment_group_hash"):
         super().__init__()
@@ -103,3 +69,56 @@ class StandardDeviationCombineFn(beam.CombineFn):
             "std": std,
             "count": count,
         }
+
+
+class Imput(beam.PTransform):
+    class Rule(NamedTuple):
+        key: str
+        imputed_value: Any
+        apply_on_nulls: bool = True
+        apply_on_empty_strings: bool = False
+        apply_on_zeroes: bool = False
+        apply_on_negative_numbers: bool = False
+
+    @staticmethod
+    def transform(element: Dict[str, Any], rules: Iterable[Rule]) -> Dict[str, Any]:
+        res = dict(element)
+        for rule in rules:
+            if rule.key not in res:
+                continue
+            v = res[rule.key]
+            if rule.apply_on_nulls and v is None:
+                res[rule.key] = rule.imputed_value
+            if rule.apply_on_empty_strings and v == "":
+                res[rule.key] = rule.imputed_value
+            if rule.apply_on_zeroes and v == 0:
+                res[rule.key] = rule.imputed_value
+            if rule.apply_on_negative_numbers and v < 0:
+                res[rule.key] = rule.imputed_value
+        return res
+
+    def __init__(self, rules: Iterable[Rule]):
+        super().__init__()
+        self.rules = rules
+
+    def expand(self, input_or_inputs):
+        return input_or_inputs | beam.Map(Imput.transform, rules=self.rules)
+
+
+class ImputStandardDeviation(beam.PTransform):
+    def __init__(self, keys: Iterable[str]):
+        super().__init__()
+        self.keys = keys
+
+    def expand(self, input_or_inputs):
+        rules = []
+        for k in self.keys:
+            imputed_value = (
+                input_or_inputs
+                | beam.Map(lambda x: x[k])
+                | beam.CombineGlobally(StandardDeviationCombineFn())
+            )
+            # noinspection PyCallByClass
+            rules.append(Imput.Rule(key=k, imputed_value=imputed_value))
+
+        return input_or_inputs | beam.Map(Imput.transform, rules=rules)
