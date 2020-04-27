@@ -18,10 +18,9 @@ def _pipeline_args(
     temp_location: str,
     runner: str,
     setup_file: str,
-    streaming: bool = False,
 ) -> List[str]:
     """Arguments required by Dataflow runner"""
-    res = [
+    return [
         f"--project={project}",
         f"--region={region}",
         f"--temp_location={temp_location}",
@@ -29,9 +28,6 @@ def _pipeline_args(
         f"--setup_file={setup_file}",
         f"--job_name={job_name}",
     ]
-    if streaming:
-        res.append("--streaming")
-    return res
 
 
 def _parse(argv):
