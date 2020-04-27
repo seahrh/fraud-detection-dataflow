@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+package acme.fraudcop.metrics;
+
+message Metric {
+  required string metric = 1;
+  required float metric_value = 2;
+  repeated string test_ids = 3;
+  optional int64 test_time = 4;
+  optional string mode = 5;
+  optional string version = 6;
+  optional string model_name = 7;
+  optional string model_uri = 8;
+
+
+}

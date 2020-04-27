@@ -10,16 +10,27 @@ class ExecutionContext(NamedTuple):
     pipeline_args: List[str]
 
 
-def _pipeline_args(job_name: str, conf: SectionProxy) -> List[str]:
+def _pipeline_args(
+    job_name: str,
+    project: str,
+    region: str,
+    temp_location: str,
+    runner: str,
+    setup_file: str,
+    streaming: bool = False,
+) -> List[str]:
     """Arguments required by Dataflow runner"""
-    return [
-        f'--project={conf["project"]}',
-        f'--region={conf["region"]}',
-        f'--temp_location={conf["temp_location"]}',
-        f'--runner={conf["runner"]}',
-        f'--setup_file={conf["setup_file"]}',
+    res = [
+        f"--project={project}",
+        f"--region={region}",
+        f"--temp_location={temp_location}",
+        f"--runner={runner}",
+        f"--setup_file={setup_file}",
         f"--job_name={job_name}",
     ]
+    if streaming:
+        res.append("--streaming")
+    return res
 
 
 def _parse(argv):
@@ -38,7 +49,15 @@ def _parse(argv):
     return ExecutionContext(
         job_name=args.job_name,
         conf=conf,
-        pipeline_args=_pipeline_args(job_name=args.job_name, conf=conf["dataflow"]),
+        pipeline_args=_pipeline_args(
+            job_name=args.job_name,
+            project=conf["dataflow"]["project"],
+            region=conf["dataflow"]["region"],
+            temp_location=conf["dataflow"]["temp_location"],
+            runner=conf["dataflow"]["runner"],
+            setup_file=conf["dataflow"]["setup_file"],
+            streaming=conf["dataflow"].getboolean("streaming"),
+        ),
     )
 
 

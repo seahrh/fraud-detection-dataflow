@@ -4,6 +4,7 @@ from apache_beam.options.pipeline_options import PipelineOptions
 
 from acme.fraudcop import cloud_logger
 from acme.fraudcop.etl.main import ExecutionContext
+from acme.fraudcop.metrics import metric_pb2
 
 _log = cloud_logger(__name__)
 
@@ -18,13 +19,19 @@ class GroupWindowsIntoBatches(beam.PTransform):
         super().__init__()
         self.window_size = window_size
 
+    @staticmethod
+    def transform(element: bytes):
+        m = metric_pb2.Metric()
+        m.ParseFromString(element)
+        _log.info(repr(m))
+
     def expand(self, pcoll):
         return (
             pcoll
-            # Assigns window info to each Pub/Sub message based on its
-            # publish timestamp.
+            # Assigns window info to each Pub/Sub message based on its publish timestamp.
             | "Window into Fixed Intervals"
             >> beam.WindowInto(window.FixedWindows(self.window_size))
+            | "Parse message" >> beam.Map(GroupWindowsIntoBatches.transform)
         )
 
 
@@ -35,7 +42,7 @@ def run(context: ExecutionContext) -> None:
     sink_project = context.conf[context.job_name]["sink_project"]
     source_topic = context.conf[context.job_name]["source_topic"]
     window_size_seconds = int(context.conf[context.job_name]["window_size_seconds"])
-    options = PipelineOptions(context.pipeline_args, streaming=True)
+    options = PipelineOptions(context.pipeline_args)
     _log.info(f"PipelineOptions={options.display_data()}")
 
     with beam.Pipeline(options=options) as pipeline:
