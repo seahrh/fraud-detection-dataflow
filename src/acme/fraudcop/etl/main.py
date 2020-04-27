@@ -1,6 +1,7 @@
 import argparse
+from configparser import ConfigParser
 from typing import NamedTuple, List
-from configparser import ConfigParser, SectionProxy
+
 from acme.fraudcop.etl import logging_pipeline
 
 
