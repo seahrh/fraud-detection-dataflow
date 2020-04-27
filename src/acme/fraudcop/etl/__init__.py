@@ -1,6 +1,8 @@
 import math
 from typing import NamedTuple, Dict, Any, Iterable
+
 import apache_beam as beam
+
 from acme.fraudcop.experiments import hash_to_float
 
 
@@ -122,3 +124,37 @@ class ImputStandardDeviation(beam.PTransform):
             rules.append(Imput.Rule(key=k, imputed_value=imputed_value))
 
         return input_or_inputs | beam.Map(Imput.transform, rules=rules)
+
+
+class TransposeToKeyValueRows(beam.PTransform):
+    def __init__(
+        self, id_column: str, key_column: str = "key", value_column: str = "value"
+    ):
+        super().__init__()
+        self.id_column = id_column
+        self.key_column = key_column
+        self.value_column = value_column
+
+    @staticmethod
+    def transform(
+        element: Dict[str, Any], id_column: str, key_column: str, value_column: str
+    ) -> Iterable[Dict[str, Any]]:
+        res = []
+        _id = element[id_column]
+        for k, v in element.items():
+            if k == id_column:
+                continue
+            row = dict()
+            row[id_column] = _id
+            row[key_column] = k
+            row[value_column] = v
+            res.append(row)
+        return res
+
+    def expand(self, input_or_inputs):
+        return input_or_inputs | beam.FlatMap(
+            TransposeToKeyValueRows.transform,
+            id_column=self.id_column,
+            key_column=self.key_column,
+            value_column=self.value_column,
+        )

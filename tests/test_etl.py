@@ -33,3 +33,19 @@ class TestImput:
         inp = {k: -1}
         rules = [Imput.Rule(key=k, imputed_value=v, apply_on_negative_numbers=True)]
         assert Imput.transform(inp, rules) == {k: v}
+
+
+class TestTransposeToKeyValueRows:
+    def test_transpose(self):
+        inp = {"id": 1, "col_1": "a"}
+        assert TransposeToKeyValueRows.transform(
+            inp, id_column="id", key_column="key", value_column="value"
+        ) == [{"id": 1, "key": "col_1", "value": "a"}]
+
+        inp = {"id": 1, "col_1": "a", "col_2": "aa"}
+        assert TransposeToKeyValueRows.transform(
+            inp, id_column="id", key_column="key", value_column="value"
+        ) == [
+            {"id": 1, "key": "col_1", "value": "a"},
+            {"id": 1, "key": "col_2", "value": "aa"},
+        ]
