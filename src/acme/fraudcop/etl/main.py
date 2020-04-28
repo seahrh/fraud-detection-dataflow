@@ -53,7 +53,6 @@ def _parse(argv):
             temp_location=conf["dataflow"]["temp_location"],
             runner=conf["dataflow"]["runner"],
             setup_file=conf["dataflow"]["setup_file"],
-            streaming=conf["dataflow"].getboolean("streaming"),
         ),
     )
 
