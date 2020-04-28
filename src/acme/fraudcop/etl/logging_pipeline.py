@@ -11,7 +11,7 @@ from acme.fraudcop.metrics import metric_pb2, to_named_tuple
 _log = logging.getLogger(__name__)
 
 
-class GroupWindowsIntoBatches(beam.PTransform):
+class ProcessMessages(beam.PTransform):
     """A composite transform that groups Pub/Sub messages based on publish
     time and outputs a list of dictionaries, where each contains one message
     and its publish timestamp.
@@ -37,7 +37,7 @@ class GroupWindowsIntoBatches(beam.PTransform):
             pcoll
             # Assigns window info to each Pub/Sub message based on its publish timestamp.
             | "window_into" >> beam.WindowInto(window.FixedWindows(self.window_size))
-            | "parse_message" >> beam.Map(GroupWindowsIntoBatches.transform)
+            | "parse_message" >> beam.Map(ProcessMessages.transform)
         )
 
 
@@ -55,7 +55,7 @@ def run(context: ExecutionContext) -> None:
         (
             pipeline
             | "read_pubsub" >> beam.io.ReadFromPubSub(topic=source_topic)
-            | "process_messages" >> GroupWindowsIntoBatches(window_size_seconds)
+            | "process_messages" >> ProcessMessages(window_size_seconds)
             | "write_bq"
             >> beam.io.Write(
                 beam.io.WriteToBigQuery(
