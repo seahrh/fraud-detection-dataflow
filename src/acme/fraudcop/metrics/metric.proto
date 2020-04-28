@@ -3,14 +3,14 @@ syntax = "proto2";
 package acme.fraudcop.metrics;
 
 message Metric {
-  required string metric = 1;
-  required float metric_value = 2;
-  repeated string test_ids = 3;
-  optional int64 test_time = 4;
-  optional string mode = 5;
-  optional string version = 6;
-  optional string model_name = 7;
-  optional string model_uri = 8;
+  required string metric = 1; // Metric name
+  required float metric_value = 2; // Metric value
+  optional string test_id = 3; // UUID of test set
+  optional int64 test_time = 4; // UTC timestamp when metric was computed
+  optional string mode = 5; // offline evaluation (training) or online evaluation (serving)
+  optional string version = 6; // version of training code or serving code
+  optional string model_name = 7; // Model name
+  optional string model_uri = 8; // URI of model files
 
 
 }

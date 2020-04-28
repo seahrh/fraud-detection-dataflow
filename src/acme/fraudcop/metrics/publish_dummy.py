@@ -19,7 +19,7 @@ def _main():
             m = metric_pb2.Metric()
             m.metric = row["metric"]
             m.metric_value = float(row["metric_value"])
-            m.test_ids.extend(row["test_ids"].split(","))
+            m.test_id = row["test_id"]
             m.test_time = int(row["test_time"])
             m.mode = row["mode"]
             m.version = row["version"]

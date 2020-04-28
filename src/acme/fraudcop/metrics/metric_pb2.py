@@ -17,7 +17,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
     package="acme.fraudcop.metrics",
     syntax="proto2",
     serialized_options=None,
-    serialized_pb=b'\n"acme/fraudcop/metrics/metric.proto\x12\x15\x61\x63me.fraudcop.metrics"\x99\x01\n\x06Metric\x12\x0e\n\x06metric\x18\x01 \x02(\t\x12\x14\n\x0cmetric_value\x18\x02 \x02(\x02\x12\x10\n\x08test_ids\x18\x03 \x03(\t\x12\x11\n\ttest_time\x18\x04 \x01(\x03\x12\x0c\n\x04mode\x18\x05 \x01(\t\x12\x0f\n\x07version\x18\x06 \x01(\t\x12\x12\n\nmodel_name\x18\x07 \x01(\t\x12\x11\n\tmodel_uri\x18\x08 \x01(\t',
+    serialized_pb=b'\n"acme/fraudcop/metrics/metric.proto\x12\x15\x61\x63me.fraudcop.metrics"\x98\x01\n\x06Metric\x12\x0e\n\x06metric\x18\x01 \x02(\t\x12\x14\n\x0cmetric_value\x18\x02 \x02(\x02\x12\x0f\n\x07test_id\x18\x03 \x01(\t\x12\x11\n\ttest_time\x18\x04 \x01(\x03\x12\x0c\n\x04mode\x18\x05 \x01(\t\x12\x0f\n\x07version\x18\x06 \x01(\t\x12\x12\n\nmodel_name\x18\x07 \x01(\t\x12\x11\n\tmodel_uri\x18\x08 \x01(\t',
 )
 
 
@@ -65,15 +65,15 @@ _METRIC = _descriptor.Descriptor(
             file=DESCRIPTOR,
         ),
         _descriptor.FieldDescriptor(
-            name="test_ids",
-            full_name="acme.fraudcop.metrics.Metric.test_ids",
+            name="test_id",
+            full_name="acme.fraudcop.metrics.Metric.test_id",
             index=2,
             number=3,
             type=9,
             cpp_type=9,
-            label=3,
+            label=1,
             has_default_value=False,
-            default_value=[],
+            default_value=b"".decode("utf-8"),
             message_type=None,
             enum_type=None,
             containing_type=None,
@@ -182,7 +182,7 @@ _METRIC = _descriptor.Descriptor(
     extension_ranges=[],
     oneofs=[],
     serialized_start=62,
-    serialized_end=215,
+    serialized_end=214,
 )
 
 DESCRIPTOR.message_types_by_name["Metric"] = _METRIC

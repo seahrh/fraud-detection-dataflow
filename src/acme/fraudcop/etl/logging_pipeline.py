@@ -1,11 +1,12 @@
 import logging
+from typing import Dict, Any
 import apache_beam as beam
 import apache_beam.transforms.window as window
 from apache_beam.options.pipeline_options import PipelineOptions
 
 
 from acme.fraudcop.etl.main import ExecutionContext
-from acme.fraudcop.metrics import metric_pb2
+from acme.fraudcop.metrics import metric_pb2, to_named_tuple
 
 _log = logging.getLogger(__name__)
 
@@ -21,10 +22,13 @@ class GroupWindowsIntoBatches(beam.PTransform):
         self.window_size = window_size
 
     @staticmethod
-    def transform(element: bytes):
+    def transform(element: bytes) -> Dict[str, Any]:
+        _log.info(f"element={repr(element)}")
         m = metric_pb2.Metric()
         m.ParseFromString(element)
-        _log.info(repr(m))
+        res = to_named_tuple(m)._asdict()
+        _log.info(f"res={repr(res)}")
+        return res
 
     def expand(self, pcoll):
         return (
@@ -50,14 +54,4 @@ def run(context: ExecutionContext) -> None:
             pipeline
             | "read_pubsub" >> beam.io.ReadFromPubSub(topic=source_topic)
             | "process_messages" >> GroupWindowsIntoBatches(window_size_seconds)
-            | "write_bq"
-            >> beam.io.Write(
-                beam.io.WriteToBigQuery(
-                    sink_table,
-                    dataset=sink_dataset,
-                    project=sink_project,
-                    create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
-                    write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
-                )
-            )
         )
