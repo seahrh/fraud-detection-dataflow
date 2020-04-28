@@ -23,10 +23,12 @@ class GroupWindowsIntoBatches(beam.PTransform):
 
     @staticmethod
     def transform(element: bytes) -> Dict[str, Any]:
-        _log.info(f"element={repr(element)}")
+        _log.debug(f"element={repr(element)}")
         m = metric_pb2.Metric()
         m.ParseFromString(element)
         res = to_named_tuple(m)._asdict()
+        # convert datetime to string because datetime object is not JSON serializable.
+        res["test_time"] = res["test_time"].isoformat()
         _log.info(f"res={repr(res)}")
         return res
 
@@ -54,4 +56,14 @@ def run(context: ExecutionContext) -> None:
             pipeline
             | "read_pubsub" >> beam.io.ReadFromPubSub(topic=source_topic)
             | "process_messages" >> GroupWindowsIntoBatches(window_size_seconds)
+            | "write_bq"
+            >> beam.io.Write(
+                beam.io.WriteToBigQuery(
+                    sink_table,
+                    dataset=sink_dataset,
+                    project=sink_project,
+                    create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
+                    write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+                )
+            )
         )
