@@ -30,9 +30,8 @@ class GroupWindowsIntoBatches(beam.PTransform):
         return (
             pcoll
             # Assigns window info to each Pub/Sub message based on its publish timestamp.
-            | "Window into Fixed Intervals"
-            >> beam.WindowInto(window.FixedWindows(self.window_size))
-            | "Parse message" >> beam.Map(GroupWindowsIntoBatches.transform)
+            | "window_into" >> beam.WindowInto(window.FixedWindows(self.window_size))
+            | "parse_message" >> beam.Map(GroupWindowsIntoBatches.transform)
         )
 
 
@@ -49,9 +48,9 @@ def run(context: ExecutionContext) -> None:
     with beam.Pipeline(options=options) as pipeline:
         (
             pipeline
-            | "Read PubSub Messages" >> beam.io.ReadFromPubSub(topic=source_topic)
-            | "Window into" >> GroupWindowsIntoBatches(window_size_seconds)
-            | "Write to BQ"
+            | "read_pubsub" >> beam.io.ReadFromPubSub(topic=source_topic)
+            | "process_messages" >> GroupWindowsIntoBatches(window_size_seconds)
+            | "write_bq"
             >> beam.io.Write(
                 beam.io.WriteToBigQuery(
                     sink_table,
