@@ -1,0 +1,43 @@
+syntax = "proto2";
+
+package acme.fraudcop.transactions;
+
+message Transaction {
+  required int64 trans_id = 1;
+  optional int64 account_id = 2;
+  optional int64 date = 3;
+  optional string type = 4;
+  optional string operation = 5;
+  optional string amount = 6;
+  optional string balance = 7;
+  optional string k_symbol = 8;
+  optional string bank = 9;
+  optional int64 account = 10;
+  optional int64 district_id = 11;
+  optional string acct_freq = 12;
+  optional string a2 = 13;
+  optional string a3 = 14;
+  optional int64 a4 = 15;
+  optional int64 a5 = 16;
+  optional int64 a6 = 17;
+  optional int64 a7 = 18;
+  optional int64 a8 = 19;
+  optional int64 a9 = 20;
+  optional string a10 = 21;
+  optional int64 a11 = 22;
+  optional string a12 = 23;
+  optional string a13 = 24;
+  optional int64 a14 = 25;
+  optional int64 a15 = 26;
+  optional int64 a16 = 27;
+  optional string disp_type = 28;
+  optional int64 card_id = 29;
+  optional string card_type = 30;
+  optional string card_issued = 31;
+  optional int64 loan_date = 32;
+  optional int64 loan_amount = 33;
+  optional int64 loan_duration = 34;
+  optional string loan_payments = 35;
+  optional string loan_status = 36;
+
+}
