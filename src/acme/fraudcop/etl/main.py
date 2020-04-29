@@ -1,14 +1,7 @@
 import argparse
+from typing import List
 from configparser import ConfigParser
-from typing import NamedTuple, List
-
-from acme.fraudcop.etl import metrics_pipeline, inference_pipeline
-
-
-class ExecutionContext(NamedTuple):
-    job_name: str
-    conf: ConfigParser
-    pipeline_args: List[str]
+from acme.fraudcop.etl import ExecutionContext, metrics_pipeline, inference_pipeline
 
 
 def _pipeline_args(
@@ -42,7 +35,6 @@ def _parse(argv):
         help="name of the dataflow job to run",
     )
     args, _ = parser.parse_known_args(argv)
-    # conf.set(args.job_name, "job_name", args.job_name)
     return ExecutionContext(
         job_name=args.job_name,
         conf=conf,

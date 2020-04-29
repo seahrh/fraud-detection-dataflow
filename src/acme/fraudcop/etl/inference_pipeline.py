@@ -5,7 +5,7 @@ import apache_beam.transforms.window as window
 from apache_beam.options.pipeline_options import PipelineOptions
 
 
-from acme.fraudcop.etl.main import ExecutionContext
+from acme.fraudcop.etl import ExecutionContext
 from acme.fraudcop.transactions import transaction_pb2, Transaction
 
 _log = logging.getLogger(__name__)

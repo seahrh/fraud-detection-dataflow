@@ -1,9 +1,16 @@
 import math
-from typing import NamedTuple, Dict, Any, Iterable
+from configparser import ConfigParser
+from typing import NamedTuple, Dict, Any, Iterable, List
 
 import apache_beam as beam
 
 from acme.fraudcop.experiments import hash_to_float
+
+
+class ExecutionContext(NamedTuple):
+    job_name: str
+    conf: ConfigParser
+    pipeline_args: List[str]
 
 
 class AssignExperimentGroup(beam.PTransform):
