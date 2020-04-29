@@ -53,8 +53,8 @@ class Transaction(NamedTuple):
             date=obj.date,
             type=obj.type,
             operation=obj.operation,
-            amount=Decimal(obj.amount),
-            balance=Decimal(obj.balance),
+            amount=Decimal(obj.amount) if obj.HasField("amount") else None,
+            balance=Decimal(obj.balance) if obj.HasField("balance") else None,
             k_symbol=obj.k_symbol,
             bank=obj.bank,
             account=obj.account,
@@ -68,10 +68,10 @@ class Transaction(NamedTuple):
             a7=obj.a7,
             a8=obj.a8,
             a9=obj.a9,
-            a10=Decimal(obj.a10),
+            a10=Decimal(obj.a10) if obj.HasField("a10") else None,
             a11=obj.a11,
-            a12=Decimal(obj.a12),
-            a13=Decimal(obj.a13),
+            a12=Decimal(obj.a12) if obj.HasField("a12") else None,
+            a13=Decimal(obj.a13) if obj.HasField("a13") else None,
             a14=obj.a14,
             a15=obj.a15,
             a16=obj.a16,
@@ -82,7 +82,9 @@ class Transaction(NamedTuple):
             loan_date=obj.loan_date,
             loan_amount=obj.loan_amount,
             loan_duration=obj.loan_duration,
-            loan_payments=Decimal(obj.loan_payments),
+            loan_payments=Decimal(obj.loan_payments)
+            if obj.HasField("loan_payments")
+            else None,
             loan_status=obj.loan_status,
         )
 
