@@ -90,10 +90,10 @@ def run(context: ExecutionContext) -> None:
     _log.info(f"PipelineOptions={options.display_data()}")
 
     with beam.Pipeline(options=options) as pipeline:
-        districts = pipeline | "district_blacklist" >> beam.io.ReadAllFromText(
+        districts = pipeline | "district_blacklist" >> beam.io.ReadFromText(
             blacklist_districts_file
         )
-        cards = pipeline | "card_blacklist" >> beam.io.ReadAllFromText(
+        cards = pipeline | "card_blacklist" >> beam.io.ReadFromText(
             blacklist_cards_file
         )
         (
