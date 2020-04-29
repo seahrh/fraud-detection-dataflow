@@ -6,7 +6,7 @@ from apache_beam.options.pipeline_options import PipelineOptions
 
 
 from acme.fraudcop.etl.main import ExecutionContext
-from acme.fraudcop.metrics import metric_pb2, to_named_tuple
+from acme.fraudcop.metrics import metric_pb2, Metric
 
 _log = logging.getLogger(__name__)
 
@@ -26,7 +26,9 @@ class ProcessMessages(beam.PTransform):
         _log.debug(f"element={repr(element)}")
         m = metric_pb2.Metric()
         m.ParseFromString(element)
-        res = to_named_tuple(m)._asdict()
+        # noinspection PyProtectedMember
+        # suppress warning: _asdict is the only fix for NamedTuple in Python3.6+
+        res: Dict[str, Any] = Metric.from_protobuf(m)._asdict()
         # convert datetime to string because datetime object is not JSON serializable.
         res["test_time"] = res["test_time"].isoformat()
         _log.info(f"res={repr(res)}")
