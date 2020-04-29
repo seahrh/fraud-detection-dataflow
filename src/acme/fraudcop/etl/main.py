@@ -2,7 +2,7 @@ import argparse
 from configparser import ConfigParser
 from typing import NamedTuple, List
 
-from acme.fraudcop.etl import metrics_pipeline
+from acme.fraudcop.etl import metrics_pipeline, inference_pipeline
 
 
 class ExecutionContext(NamedTuple):
@@ -61,6 +61,9 @@ def _main(argv=None) -> None:
     context = _parse(argv)
     if context.job_name == context.conf["evaluation-metrics-logging"]["job_name"]:
         metrics_pipeline.run(context)
+        return
+    if context.job_name == context.conf["fraud-detection"]["job_name"]:
+        inference_pipeline.run(context)
         return
     raise ValueError(f"Unrecognized job name: {context.job_name}")
 

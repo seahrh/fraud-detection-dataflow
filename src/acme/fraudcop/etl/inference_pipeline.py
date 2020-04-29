@@ -24,11 +24,11 @@ class ProcessMessages(beam.PTransform):
     @staticmethod
     def transform(element: bytes) -> Dict[str, Any]:
         _log.debug(f"element={repr(element)}")
-        m = transaction_pb2.Transaction()
-        m.ParseFromString(element)
+        pb = transaction_pb2.Transaction()
+        pb.ParseFromString(element)
         # noinspection PyProtectedMember
         # suppress warning: _asdict is the only fix for NamedTuple in Python3.6+
-        res: Dict[str, Any] = Transaction.from_protobuf(m)._asdict()
+        res: Dict[str, Any] = Transaction.from_protobuf(pb)._asdict()
         _log.info(f"res={repr(res)}")
         return res
 
