@@ -13,8 +13,7 @@ _log = logging.getLogger(__name__)
 
 class ProcessMessages(beam.PTransform):
     """A composite transform that groups Pub/Sub messages based on publish
-    time and outputs a list of dictionaries, where each contains one message
-    and its publish timestamp.
+    time and outputs a list of dictionaries.
     """
 
     def __init__(self, window_size: int):
