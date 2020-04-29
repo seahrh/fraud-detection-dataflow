@@ -7,6 +7,22 @@ import apache_beam as beam
 from acme.fraudcop.experiments import hash_to_float
 
 
+class TableRef(NamedTuple):
+    project: str
+    dataset: str
+    table: str
+
+    # noinspection PyArgumentList
+    # suppress warning: parameter `typename` unfilled
+    @classmethod
+    def from_qualified_name(cls, s: str):
+        tokens = s.split(".")
+        return cls(project=tokens[0], dataset=tokens[1], table=tokens[2])
+
+    def qualified_name(self) -> str:
+        return ".".join([self.project, self.dataset, self.table])
+
+
 class ExecutionContext(NamedTuple):
     job_name: str
     conf: ConfigParser

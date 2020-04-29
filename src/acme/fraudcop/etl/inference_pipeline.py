@@ -1,17 +1,16 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Iterable
 import apache_beam as beam
 import apache_beam.transforms.window as window
 from apache_beam.options.pipeline_options import PipelineOptions
 
-
-from acme.fraudcop.etl import ExecutionContext
+from acme.fraudcop.etl import ExecutionContext, TableRef
 from acme.fraudcop.transactions import transaction_pb2, Transaction
 
 _log = logging.getLogger(__name__)
 
 
-class ProcessMessages(beam.PTransform):
+class ParseMessages(beam.PTransform):
     """A composite transform that groups Pub/Sub messages based on publish
     time and outputs a list of dictionaries.
     """
@@ -36,23 +35,70 @@ class ProcessMessages(beam.PTransform):
             pcoll
             # Assigns window info to each Pub/Sub message based on its publish timestamp.
             | "window_into" >> beam.WindowInto(window.FixedWindows(self.window_size))
-            | "parse_message" >> beam.Map(ProcessMessages.transform)
+            | "parse_message" >> beam.Map(ParseMessages.transform)
+        )
+
+
+class ScrubBlacklist(beam.PTransform):
+    """A composite transform that marks transaction as fraud if blacklist rule applies.
+    """
+
+    def __init__(self, districts, cards):
+        super().__init__()
+        self.districts = districts
+        self.cards = cards
+
+    @staticmethod
+    def transform(
+        element: Dict[str, Any], district_ids: Iterable[int], card_ids: Iterable[int]
+    ) -> Dict[str, Any]:
+        districts = set(district_ids)
+        cards = set(card_ids)
+        element["blacklist_is_fraud"] = False
+        element["blacklist_reason"] = ""
+        district = element["district_id"]
+        if district in districts:
+            element["blacklist_is_fraud"] = True
+            element["blacklist_reason"] = f"district id {district}"
+        card = element["card_id"]
+        if card in cards:
+            element["blacklist_is_fraud"] = True
+            element["blacklist_reason"] = f"card id {card}"
+        _log.info(f"element={repr(element)}")
+        return element
+
+    def expand(self, pcoll):
+        return pcoll | "check_blacklist" >> beam.Map(
+            ScrubBlacklist.transform,
+            beam.pvalue.AsIter(self.districts),
+            beam.pvalue.AsIter(self.cards),
         )
 
 
 def run(context: ExecutionContext) -> None:
     """The main function which creates the pipeline and runs it."""
-    sink_table = context.conf[context.job_name]["sink_table"]
-    sink_dataset = context.conf[context.job_name]["sink_dataset"]
-    sink_project = context.conf[context.job_name]["sink_project"]
+    sink_table = TableRef.from_qualified_name(
+        context.conf[context.job_name]["sink_table"]
+    )
+    blacklist_districts_file = context.conf[context.job_name][
+        "blacklist_districts_file"
+    ]
+    blacklist_cards_file = context.conf[context.job_name]["blacklist_cards_file"]
     source_topic = context.conf[context.job_name]["source_topic"]
     window_size_seconds = int(context.conf[context.job_name]["window_size_seconds"])
     options = PipelineOptions(context.pipeline_args, streaming=True)
     _log.info(f"PipelineOptions={options.display_data()}")
 
     with beam.Pipeline(options=options) as pipeline:
+        districts = pipeline | "district_blacklist" >> beam.io.ReadAllFromText(
+            blacklist_districts_file
+        )
+        cards = pipeline | "card_blacklist" >> beam.io.ReadAllFromText(
+            blacklist_cards_file
+        )
         (
             pipeline
             | "read_pubsub" >> beam.io.ReadFromPubSub(topic=source_topic)
-            | "process_messages" >> ProcessMessages(window_size_seconds)
+            | "parse_messages" >> ParseMessages(window_size_seconds)
+            | "scrub_blacklist" >> ScrubBlacklist(districts=districts, cards=cards)
         )
