@@ -5,7 +5,7 @@ import apache_beam.transforms.window as window
 from apache_beam.options.pipeline_options import PipelineOptions
 
 
-from acme.fraudcop.etl.main import ExecutionContext
+from acme.fraudcop.etl import ExecutionContext
 from acme.fraudcop.metrics import metric_pb2, Metric
 
 _log = logging.getLogger(__name__)

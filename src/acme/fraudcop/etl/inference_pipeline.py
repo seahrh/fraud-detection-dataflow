@@ -6,6 +6,7 @@ from apache_beam.options.pipeline_options import PipelineOptions
 
 from acme.fraudcop.etl import ExecutionContext, TableRef, AssignExperimentGroup
 from acme.fraudcop.transactions import transaction_pb2, Transaction
+from servingfraudcop.preprocessing import Example, preprocess, Features
 
 _log = logging.getLogger(__name__)
 
@@ -79,6 +80,37 @@ class ScrubBlacklist(beam.PTransform):
         )
 
 
+class MakeFeatures(beam.PTransform):
+    """A composite transform that performs feature engineering.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def transform(element: Dict[str, Any]) -> Dict[str, Any]:
+        _log.debug(f"element={repr(element)}")
+        features: Features = preprocess(
+            Example(
+                date=element["date"],
+                type=element["type"],
+                amount=element["amount"],
+                a4=element["a4"],
+                card_issued=element["card_issued"],
+            )
+        )
+        res = dict(element)
+        # noinspection PyProtectedMember
+        # suppress warning: _asdict is the only fix for NamedTuple in Python3.6+
+        for k, v in features._asdict():
+            res[f"f_{k}"] = v
+        _log.info(f"res={repr(res)}")
+        return res
+
+    def expand(self, pcoll):
+        return pcoll | "preprocess" >> beam.Map(MakeFeatures.transform)
+
+
 def run(context: ExecutionContext) -> None:
     """The main function which creates the pipeline and runs it."""
     sink_table = TableRef.from_qualified_name(
@@ -114,4 +146,5 @@ def run(context: ExecutionContext) -> None:
             | "scrub_blacklist" >> ScrubBlacklist(districts=districts, cards=cards)
             | "assign_experiment_group"
             >> AssignExperimentGroup(input_key=experiment_hash_input_key)
+            | "make_features" >> MakeFeatures()
         )
