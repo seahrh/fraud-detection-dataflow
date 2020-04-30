@@ -54,18 +54,22 @@ class ScrubBlacklist(beam.PTransform):
     ) -> Dict[str, Any]:
         districts = set(district_ids)
         cards = set(card_ids)
-        element["blacklist_is_fraud"] = False
-        element["blacklist_reason"] = ""
-        district = element["district_id"]
+        _log.debug(
+            f"element={repr(element)}\ndistricts={repr(districts)}\ncards={repr(cards)}"
+        )
+        res = dict(element)
+        res["blacklist_is_fraud"] = False
+        res["blacklist_reason"] = ""
+        district = res["district_id"]
         if district in districts:
-            element["blacklist_is_fraud"] = True
-            element["blacklist_reason"] = f"district id {district}"
-        card = element["card_id"]
+            res["blacklist_is_fraud"] = True
+            res["blacklist_reason"] = f"district id {district}"
+        card = res["card_id"]
         if card in cards:
-            element["blacklist_is_fraud"] = True
-            element["blacklist_reason"] = f"card id {card}"
-        _log.info(f"element={repr(element)}")
-        return element
+            res["blacklist_is_fraud"] = True
+            res["blacklist_reason"] = f"card id {card}"
+        _log.info(f"res={repr(res)}")
+        return res
 
     def expand(self, pcoll):
         return pcoll | "check_blacklist" >> beam.Map(
@@ -90,11 +94,15 @@ def run(context: ExecutionContext) -> None:
     _log.info(f"PipelineOptions={options.display_data()}")
 
     with beam.Pipeline(options=options) as pipeline:
-        districts = pipeline | "district_blacklist" >> beam.io.ReadFromText(
-            blacklist_districts_file
+        districts = (
+            pipeline
+            | "district_blacklist" >> beam.io.ReadFromText(blacklist_districts_file)
+            | "district_blacklist_type_cast" >> beam.Map(int)
         )
-        cards = pipeline | "card_blacklist" >> beam.io.ReadFromText(
-            blacklist_cards_file
+        cards = (
+            pipeline
+            | "card_blacklist" >> beam.io.ReadFromText(blacklist_cards_file)
+            | "card_blacklist_type_cast" >> beam.Map(int)
         )
         (
             pipeline
