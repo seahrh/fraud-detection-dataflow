@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, Any, Iterable
+from configparser import ConfigParser
 import apache_beam as beam
 import apache_beam.transforms.window as window
 from apache_beam.options.pipeline_options import PipelineOptions
@@ -84,11 +85,12 @@ class MakeFeatures(beam.PTransform):
     """A composite transform that performs feature engineering.
     """
 
-    def __init__(self):
+    def __init__(self, conf: ConfigParser):
         super().__init__()
+        self.conf = conf
 
     @staticmethod
-    def transform(element: Dict[str, Any]) -> Dict[str, Any]:
+    def transform(element: Dict[str, Any], conf: ConfigParser) -> Dict[str, Any]:
         _log.debug(f"element={repr(element)}")
         features: Features = preprocess(
             Example(
@@ -97,18 +99,17 @@ class MakeFeatures(beam.PTransform):
                 amount=element["amount"],
                 a4=element["a4"],
                 card_issued=element["card_issued"],
-            )
+            ),
+            conf=conf,
         )
         res = dict(element)
-        # noinspection PyProtectedMember
-        # suppress warning: _asdict is the only fix for NamedTuple in Python3.6+
-        for k, v in features._asdict():
+        for k, v in features._asdict().items():
             res[f"f_{k}"] = v
         _log.info(f"res={repr(res)}")
         return res
 
     def expand(self, pcoll):
-        return pcoll | "preprocess" >> beam.Map(MakeFeatures.transform)
+        return pcoll | "preprocess" >> beam.Map(MakeFeatures.transform, self.conf)
 
 
 def run(context: ExecutionContext) -> None:
@@ -146,5 +147,5 @@ def run(context: ExecutionContext) -> None:
             | "scrub_blacklist" >> ScrubBlacklist(districts=districts, cards=cards)
             | "assign_experiment_group"
             >> AssignExperimentGroup(input_key=experiment_hash_input_key)
-            | "make_features" >> MakeFeatures()
+            | "make_features" >> MakeFeatures(conf=context.conf)
         )

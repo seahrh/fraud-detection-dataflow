@@ -3,13 +3,6 @@ from decimal import Decimal
 from configparser import ConfigParser
 from typing import Dict, Union, Optional, NamedTuple
 
-_conf = ConfigParser()
-_conf.read("serving.ini")
-# TODO read env value from environment variable
-DATE_FORMAT = _conf[__name__]["date_format"]
-NULL_ENCODING_KEY = _conf[__name__]["null_encoding_key"]
-DAILY_SPEND = float(_conf[__name__]["average_daily_user_spend"])
-
 
 def _as_dict(encoding: str) -> Dict[str, float]:
     entries = encoding.split()
@@ -18,11 +11,6 @@ def _as_dict(encoding: str) -> Dict[str, float]:
         k, v = e.split(":")
         res[k] = float(v)
     return res
-
-
-TYPE_ENCODING = _as_dict(_conf[__name__]["type_encoding"])
-AMOUNT_STATS = _as_dict(_conf[__name__]["amount_stats"])
-CARD_AGE_STATS = _as_dict(_conf[__name__]["card_age_stats"])
 
 
 class Features(NamedTuple):
@@ -43,8 +31,8 @@ class Example(NamedTuple):
     card_issued: Optional[str] = None
 
 
-def _date(s: str) -> date:
-    return datetime.strptime(s, DATE_FORMAT).astimezone(timezone.utc).date()
+def _date(s: str, date_format: str) -> date:
+    return datetime.strptime(s, date_format).astimezone(timezone.utc).date()
 
 
 def _standard_scale(
@@ -54,27 +42,35 @@ def _standard_scale(
     return (float(v) - mean) / std
 
 
-def _card_age(card_issued: str, txn_date: date) -> int:
-    card_date = _date(card_issued[:6])
+def _card_age(card_issued: str, date_format: str, txn_date: date) -> int:
+    card_date = _date(card_issued[:6], date_format)
     return (txn_date - card_date).days
 
 
-def preprocess(example: Example) -> Features:
-    d = _date(str(example.date))
+def preprocess(example: Example, conf: ConfigParser) -> Features:
+    date_format = conf[__name__]["date_format"]
+    null_encoding_key = conf[__name__]["null_encoding_key"]
+    daily_spend = float(conf[__name__]["average_daily_user_spend"])
+    type_encoding = _as_dict(conf[__name__]["type_encoding"])
+    amount_stats = _as_dict(conf[__name__]["amount_stats"])
+    card_age_stats = _as_dict(conf[__name__]["card_age_stats"])
+    d = _date(str(example.date), date_format)
     card_age = None
     if example.card_issued is not None:
-        card_age = _card_age(card_issued=example.card_issued, txn_date=d)
-    _type = example.type if example.type is not None else NULL_ENCODING_KEY
+        card_age = _card_age(
+            card_issued=example.card_issued, date_format=date_format, txn_date=d
+        )
+    _type = example.type if example.type is not None else null_encoding_key
     return Features(
         date_day_of_week=d.isoweekday(),
         date_week_number=d.isocalendar()[1],
-        type=TYPE_ENCODING[_type],
+        type=type_encoding[_type],
         amount=_standard_scale(
-            float(example.amount), AMOUNT_STATS["mean"], AMOUNT_STATS["std"]
+            float(example.amount), amount_stats["mean"], amount_stats["std"]
         ),
-        amount_to_daily_spend=float(example.amount) / DAILY_SPEND,
-        a4=_standard_scale(example.a4, AMOUNT_STATS["mean"], AMOUNT_STATS["std"]),
+        amount_to_daily_spend=float(example.amount) / daily_spend,
+        a4=_standard_scale(example.a4, amount_stats["mean"], amount_stats["std"]),
         card_age=_standard_scale(
-            card_age, CARD_AGE_STATS["mean"], CARD_AGE_STATS["std"]
+            card_age, card_age_stats["mean"], card_age_stats["std"]
         ),
     )
