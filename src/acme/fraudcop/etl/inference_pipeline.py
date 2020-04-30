@@ -6,7 +6,7 @@ from apache_beam.options.pipeline_options import PipelineOptions
 
 from acme.fraudcop.etl import ExecutionContext, TableRef, AssignExperimentGroup
 from acme.fraudcop.transactions import transaction_pb2, Transaction
-from servingfraudcop.preprocessing import Example, preprocess, Features
+from acme.fraudcop.serving.preprocessing import Example, preprocess, Features
 
 _log = logging.getLogger(__name__)
 
