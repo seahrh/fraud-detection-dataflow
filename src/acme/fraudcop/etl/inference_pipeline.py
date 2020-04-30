@@ -4,7 +4,7 @@ import apache_beam as beam
 import apache_beam.transforms.window as window
 from apache_beam.options.pipeline_options import PipelineOptions
 
-from acme.fraudcop.etl import ExecutionContext, TableRef
+from acme.fraudcop.etl import ExecutionContext, TableRef, AssignExperimentGroup
 from acme.fraudcop.transactions import transaction_pb2, Transaction
 
 _log = logging.getLogger(__name__)
@@ -88,6 +88,9 @@ def run(context: ExecutionContext) -> None:
         "blacklist_districts_file"
     ]
     blacklist_cards_file = context.conf[context.job_name]["blacklist_cards_file"]
+    experiment_hash_input_key = context.conf[context.job_name][
+        "experiment_hash_input_key"
+    ]
     source_topic = context.conf[context.job_name]["source_topic"]
     window_size_seconds = int(context.conf[context.job_name]["window_size_seconds"])
     options = PipelineOptions(context.pipeline_args, streaming=True)
@@ -109,4 +112,6 @@ def run(context: ExecutionContext) -> None:
             | "read_pubsub" >> beam.io.ReadFromPubSub(topic=source_topic)
             | "parse_messages" >> ParseMessages(window_size_seconds)
             | "scrub_blacklist" >> ScrubBlacklist(districts=districts, cards=cards)
+            | "assign_experiment_group"
+            >> AssignExperimentGroup(input_key=experiment_hash_input_key)
         )

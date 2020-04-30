@@ -1,10 +1,13 @@
 import math
+import logging
 from configparser import ConfigParser
 from typing import NamedTuple, Dict, Any, Iterable, List
 
 import apache_beam as beam
 
 from acme.fraudcop.experiments import hash_to_float
+
+_log = logging.getLogger(__name__)
 
 
 class TableRef(NamedTuple):
@@ -30,6 +33,9 @@ class ExecutionContext(NamedTuple):
 
 
 class AssignExperimentGroup(beam.PTransform):
+    """A composite transform that assigns a transaction to an experiment group with a hash value.
+    """
+
     def __init__(self, input_key: str, output_key: str = "experiment_group_hash"):
         super().__init__()
         self.input_key = input_key
@@ -40,11 +46,12 @@ class AssignExperimentGroup(beam.PTransform):
         element: Dict[str, Any], input_key: str, output_key: str
     ) -> Dict[str, Any]:
         res = dict(element)
-        res[output_key] = hash_to_float(res[input_key])
+        res[output_key] = hash_to_float(str(res[input_key]))
+        _log.info(f"res={repr(res)}")
         return res
 
     def expand(self, input_or_inputs):
-        return input_or_inputs | beam.Map(
+        return input_or_inputs | "assign_experiment_group" >> beam.Map(
             AssignExperimentGroup.transform,
             input_key=self.input_key,
             output_key=self.output_key,
