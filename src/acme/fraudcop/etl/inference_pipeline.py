@@ -180,4 +180,14 @@ def run(context: ExecutionContext) -> None:
             >> AssignExperimentGroup(input_key=experiment_hash_input_key)
             | "make_features" >> MakeFeatures(conf=context.conf)
             | "make_prediction" >> MakePrediction(model_path=model_path)
+            | "write_bq"
+            >> beam.io.Write(
+                beam.io.WriteToBigQuery(
+                    sink_table.table,
+                    dataset=sink_table.dataset,
+                    project=sink_table.project,
+                    create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
+                    write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+                )
+            )
         )
