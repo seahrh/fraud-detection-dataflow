@@ -11,6 +11,7 @@ def _pipeline_args(
     temp_location: str,
     runner: str,
     setup_file: str,
+    machine_type: str,
 ) -> List[str]:
     """Arguments required by Dataflow runner"""
     return [
@@ -20,6 +21,7 @@ def _pipeline_args(
         f"--runner={runner}",
         f"--setup_file={setup_file}",
         f"--job_name={job_name}",
+        f"--machine_type={machine_type}",
     ]
 
 
@@ -45,6 +47,7 @@ def _parse(argv):
             temp_location=conf["dataflow"]["temp_location"],
             runner=conf["dataflow"]["runner"],
             setup_file=conf["dataflow"]["setup_file"],
+            machine_type=conf["dataflow"]["machine_type"],
         ),
     )
 
