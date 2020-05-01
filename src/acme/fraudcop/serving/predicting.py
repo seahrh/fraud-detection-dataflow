@@ -1,3 +1,4 @@
+import random
 from acme.fraudcop.serving.preprocessing import Features
 
 
@@ -9,10 +10,8 @@ class Model:
 
     def _load(self):
         """Load model from file path."""
+        random.seed(1)
         return None
 
     def predict(self, features: Features) -> float:
-        import random
-
-        random.seed(len(features))
         return random.random()
