@@ -24,6 +24,8 @@ All Dataflow transforms are packaged as `beam.PTransform` [components](https://b
 
 # Inference pipeline
 ### DAG
+![Inference pipeline](docs/inference_pipeline.PNG)
+
 Code: [src/acme/fraudcop/etl/inference_pipeline.py](src/acme/fraudcop/etl/inference_pipeline.py)
 
 #### Stream transactions from PubSub
