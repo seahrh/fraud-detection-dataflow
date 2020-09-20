@@ -1,6 +1,8 @@
 Real-Time Fraud Detection
 =========================================
-Working example of a real-time inference pipeline on GCP Dataflow (Apache Beam). The pipeline classifies whether a credit card transaction is fraudulent or not. The pipeline also supports A/B testing by exposing treatment groups to different machine learning models.
+Working example of a real-time inference pipeline on GCP Cloud Dataflow (Apache Beam). The pipeline classifies whether a credit card transaction is fraudulent or not. The pipeline also supports A/B testing by exposing treatment groups to different machine learning models.
+
+I spent ~US$52 on Cloud Dataflow by running the pipeline continuously over 3 days in April 2020 (GCP region: `asia-east1` Taiwan). A batch pipeline should be much cheaper than a streaming pipeline.
 
 Dataflow pipeline
 ![Inference pipeline](docs/inference_pipeline.PNG)
