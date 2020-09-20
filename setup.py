@@ -14,5 +14,5 @@ setup(
     license="All rights reserved",
     author="seahrh",
     author_email="seahrh@gmail.com",
-    url="https://github.com/seahrh/acme.fraudcop",
+    url="https://github.com/seahrh/fraud-detection-dataflow",
 )
