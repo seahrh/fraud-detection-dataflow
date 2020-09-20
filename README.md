@@ -1,5 +1,9 @@
-Fraud Detection Pipeline on GCP Dataflow
----------------------------------------------
+Real-Time Fraud Detection
+=========================================
+Working example of a real-time inference pipeline on GCP Dataflow (Apache Beam). The pipeline classifies whether a credit card transaction is fraudulent or not. The pipeline also supports A/B testing by exposing treatment groups to different machine learning models.
+
+Dataflow pipeline
+![Inference pipeline](docs/inference_pipeline.PNG)
 
 # Highlights
 - Uses a distributed ETL framework: Apache Beam on GCP Dataflow
@@ -29,6 +33,7 @@ All Dataflow transforms are packaged as `beam.PTransform` [components](https://b
 Code: [src/acme/fraudcop/etl/inference_pipeline.py](src/acme/fraudcop/etl/inference_pipeline.py)
 
 #### Stream transactions from PubSub
+- Credit card transactions arrive in real-time (consume data from PubSub topic)
 - Protobuf message: [src/acme/fraudcop/transactions/transaction.proto](src/acme/fraudcop/transactions/transaction.proto)
 - Transform protobuf to Python NamedTuple for immutability and full range of Python types
 
